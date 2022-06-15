@@ -14,14 +14,29 @@ CLASS ziot_cl_whsprd_creation DEFINITION
                mc_fm_name   TYPE progname VALUE 'ZIOT_FM_WHSPRD_CREATION',
                mc_task_name TYPE progname VALUE 'ZIOT_WHSPRD_CREATION'.
 
-    CLASS-METHODS: execute
+    CLASS-METHODS: 
+    execute
       IMPORTING
         iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
         iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
       RAISING
         zcx_cp_not_readable
         zcx_plc_not_determinable,
-    idoc_input_matmas01_e.
+    idoc_input_matmas01_e
+      IMPORTING
+        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+      RAISING
+        zcx_cp_not_readable
+        zcx_plc_not_determinable,
+    idoc_input_matmas02_e,
+    idoc_input_matmas03_e
+      IMPORTING
+        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+      RAISING
+        zcx_cp_not_readable
+        zcx_plc_not_determinable,.
     CLASS-METHODS create_job.
 
   PROTECTED SECTION.
@@ -30,7 +45,8 @@ CLASS ziot_cl_whsprd_creation DEFINITION
                 mv_entitled TYPE /scwm/de_entitled VALUE ziot_constants=>entitled,
                 mv_msg      TYPE string.
 
-    CLASS-METHODS det_relevant_products
+    CLASS-METHODS 
+    det_relevant_products
       RETURNING
         VALUE(rt_products) TYPE /sapapo/matkey_out_tab.
     CLASS-METHODS conv_apo_matkey_to_whsprod

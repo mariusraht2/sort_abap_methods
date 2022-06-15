@@ -1,72 +1,111 @@
 import re;
 
+def readFileLines(fileName): 
+    fileHandler = open(fileName, "r");
+    fileContent = fileHandler.read();
+    fileHandler.flush();
+    fileHandler.close();
+    
+    
+    return fileContent.splitlines();
+#ENDDEF
+
+def extractMethodNames(fileLines):
+    # Extract method names
+    methodNames = [];
+    methodDefinition = False;
+
+    for line in fileLines:       
+        if re.search('METHODS:?', line):
+            methodDefinition = True;
+            print(line);
+            methodName = '';
+            result = re.search('METHODS:?\s+(\w+)', line);
+            if result != None:
+                methodName = result.group(1);
+                methodNames.append(methodName);
+        elif methodDefinition == True and re.search('.*\.+', line):
+            methodDefinition = False;
+            methodName = '';
+            print(line);
+        elif methodDefinition == True and methodName == '':
+            result = re.search('\s*(\w+)', line);
+            if result != None:
+                methodName = result.group(1);
+                methodNames.append(methodName);
+        # ENDIF
+        
+        if re.search('ENDCLASS', line):
+            break;
+        #ENDIF
+        
+        if methodDefinition == True and re.search('.*,', line):
+            print(line);
+            methodName = '';
+        #ENDIF
+        
+    #ENDFOR
+
+    methodNames = sorted(methodNames);
+    print(methodNames);
+    return methodNames;
+
+#ENDDEF
+    
+def createNewFileContent(fileLines, methodNames):
+    methodContent = '';
+    newFileContentList = [];
+    isMethod = False;
+    
+    for line in fileLines:        
+        result = re.search('METHOD\s+(\w+)', line);
+        if result != None:
+            isMethod = True;
+            methodName = result.group(1);
+        
+        # Content either belongs to file in general or to specific methods
+        if isMethod == True:
+            methodContent += line;
+        else:
+            newFileContentList.append(line);
+        #ENDIF
+                
+        if re.search('ENDMETHOD', line):
+            isMethod = False; 
+            newFileContentList.append(methodContent);
+            methodContent = '';
+        #ENDIF
+        
+    #ENDFOR
+
+    print(newFileContentList);
+    
+    newFileContent = '';
+    for line in newFileContentList:
+        if not re.search('METHOD/s+(/w+)\s*\.', line):
+            newFileContent += line;
+        else:
+            newFileContent += methodContent[methodNameIndex];                
+            methodNameIndex += 1;
+        #ENDIF
+        
+    #ENDFOR
+    
+    print(newFileContent);
+        
+#ENDDEF    
+    
+def writeNewFileContent(fileName, newFileContent):
+    fileHandler = open(fileName, "w");
+    fileHandler.write(newFileContent);
+    fileHandler.flush();
+    fileHandler.close();
+#ENDDEF
+
 print('Dateiname:');
 fileName = input();
 
-fileHandler = open(fileName, "r+");
-fileContent = fileHandler.read();
-fileLines = fileContent.splitlines();
-
-methodDefinition = False;
-
-# TODO: Regex doesn't consider long lists of methods after just one METHODS keyword
-for methodName in re.finditer('METHODS:?\s+(\w+)(?:[\s\w\/!=>()]+)(?:,\s*(\w+))*', fileContent):
-    entry = methodName.group(1);
-    print(entry);
-    entry = methodName.group(2);
-    if entry != None:
-        print(entry);
-
-# for line in fileLines:
-#     if.re
-
-#     if re.match('^[\t\s]*CLASS-METHODS:?[\s\t]+.*$', line):
-#         methodDefinition = True;
-#         print(line);
-#     elif methodDefinition == True and re.match('^.*[,.]+$', line):
-#         methodDefinition = False;
-#         print(line);
-
-    
-
-#TODO
-# - Extract method names from definition (consider CLASS-METHODS also comma-separated)
-# - Sort method names
-
-# regexBeginOfMethod = '^[\s\t]*METHOD\s{1}\w+\.$';
-# regexEndOfMethod = '^[\s\t]*ENDMETHOD\.$';
-
-# newFileContent = '';
-# startMethodSorting = False;
-# beginOfMethod = False;
-# endOfMethod = False;
-
-# for line in fileLines:
-    
-#     if re.match(regexBeginOfMethod, line):
-#         startMethodSorting = True;
-#         beginOfMethod = True;
-#         methodContent = '';
-#     elif re.match(regexEndOfMethod):
-#         endOfMethod = True;
-#     #ENDIF
-
-#     if startMethodSorting == False:
-#         newFileContent += line;
-#         continue;
-#     else:
-#         methodContent += line;
-#     #ENDIF
-
-#     if endOfMethod == True:
-#         newFileContent += methodContent;
-#         print('New method:\n' + methodContent);
-#     ##ENDIF
-
-# #ENDFOR
-
-# print(newFileContent);
-# fileHandler.write(newFileContent);
-
-#fileHandler.close();
-#fileHandler.flush();
+fileLines = readFileLines(fileName);
+methodNames = extractMethodNames(fileLines);
+newFileContent = createNewFileContent(fileLines, methodNames);
+# writeNewFileContent(fileName, newFileContent);
