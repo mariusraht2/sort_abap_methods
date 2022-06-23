@@ -11,113 +11,120 @@ def readFileLines(fileName):
 
 def extractMethodNames(fileLines):
     # Extract method names
+    methodName = '';
+    methodIndex = -1;
     methodNames = [];
-    methodDefinition = False;
+    methodDefs = [];
+    methodImps = None;
+    isClassDef = False;
+    isClassImp = False;
+    isMethodDef = False;
+    isMethodImp = False;
 
-    for line in fileLines:       
-        if re.search('METHODS:?', line):
-            methodDefinition = True;
-            methodName = '';
-            result = re.search('METHODS:?\s+(\w+)', line);
-            if result != None:
-                methodName = result.group(1);
-                methodNames.append(methodName);
-        elif methodDefinition == True and re.search('.*\.+', line):
-            methodDefinition = False;
-            methodName = '';
-        elif methodDefinition == True and methodName == '':
-            result = re.search('\s*(\w+)', line);
-            if result != None:
-                methodName = result.group(1);
-                methodNames.append(methodName);
+    for line in fileLines:
+
+        if re.search('CLASS[\s\S]*DEFINITION', line):
+            isClassDef = True;
+        elif re.search('ENDCLASS', line):
+            isClassDef = False;
+            isClassImp = False;
+            if methodImps == None:
+                methodImps = ['' for y in range(len(methodNames))];
             #ENDIF
-        # ENDIF
-        
-        if re.search('ENDCLASS', line):
-            break;
+        elif re.search('CLASS[\s\S]*IMPLEMENTATION', line):
+            isClassImp = True;
         #ENDIF
-        
-        if methodDefinition == True and re.search('.*,', line):
-            methodName = '';
+
+        if isClassDef == True:
+            methodName, methodNames, isMethodDef, methodDefs = detMethodDef(line, methodName, methodNames, isMethodDef, methodDefs);
+        elif isClassImp == True:
+            isMethodImp, methodIndex, methodImps = detMethodImp(line, methodNames, isMethodImp, methodIndex, methodImps);
         #ENDIF
-        
+
     #ENDFOR
 
     methods = [[0 for x in range(3)] for y in range(len(methodNames))];
     for i, methodName in enumerate(methodNames):
         methods[i][0] = methodName;
+        methods[i][1] = methodDefs[i];
+        methods[i][2] = methodImps[i];
     #ENDFOR
 
     methods = sorted(methods, key=lambda m:m[0]);
     return methods;
 
 #ENDDEF
+
+def detMethodDef(line, methodName, methodNames, isMethodDef, methodDefs):
+    if re.search('METHODS:?', line):
+        isMethodDef = True;
+        methodName = '';
+        result = re.search('METHODS:?\s+(\w+)', line);  
+        if result != None:
+            methodName = result.group(1);
+            methodNames.append(methodName);
+    elif isMethodDef == True and methodName == '':
+        result = re.search('\s*(\w+)', line);
+        if result != None:
+            methodName = result.group(1);
+            methodNames.append(methodName);
+        #ENDIF
+    # ENDIF
     
-def createNewFileContent(fileLines, methods):
-    newFileContentList = [];
-    isMethodDef = False;
-    isMethodImp = False;
+    if isMethodDef == True:
+        try:
+            methodDefs[len(methodNames)-1];
+        except IndexError:
+             methodDefs.append('');
+        #ENDTRY
 
-    for line in fileLines:
+        if methodDefs[len(methodNames)-1] != '':
+            methodDefs[len(methodNames)-1] += "\n";
+        #ENDIF
+        methodDefs[len(methodNames)-1] += line;
+    #ENDIF
 
-        i = 0;
-        for i in range(2):
-            if i == 1:
-                # Check if method definition
-                result = re.search('METHODS:?\s+(\w+)', line);
-            elif i == 2:
-                # Check if method implementation
-                result = re.search('METHOD\s+(\w+)', line);
-            #ENDIF
+    if isMethodDef == True and re.search(',', line):
+        methodName = '';
+    elif isMethodDef == True and re.search('.*\.+', line):
+        isMethodDef = False;
+        methodName = '';
+    #ENDIF
 
-            if result != None:
-                if i == 1:
-                    isMethodDef = True;
-                elif i == 2:
-                    isMethodImp = True;
-                #ENDIF
+    return methodName, methodNames, isMethodDef, methodDefs;
+#ENDDEF
+
+def detMethodImp(line, methodNames, isMethodImp, methodIndex, methodImps):
+    # Check if method implementation
+    result = re.search('^\s*METHOD\s+(\w+)', line);
+    if result != None:
+        isMethodImp = True;
+    #ENDIF
+
+    # Determine method index
+    if result != None:
+        methodIndex = -1;
+        for i, methodName in enumerate(methodNames):
+            if methodName == result.group(1):
+                methodIndex = i;
+                break;
             #ENDIF
         #ENDFOR
+    #ENDIF
 
-        # Determine method index
-        if result != None:
-            methodIndex = -1;
-            for i, method in enumerate(methods):
-                if method[i][0] == result.group(1):
-                    methodIndex = i;
-                    break;
-                #ENDIF
-            #ENDFOR
-        #ENDIF
-
-        if methodIndex > -1:
-            if isMethodDef == True:
-                method[methodIndex][1] += "\n";
-            elif isMethodImp == True:
-                method[methodIndex][2] += "\n";
-        #ENDIF
-
-        # Content either belongs to file in general or to specific methods
-        if methodIndex > -1:
-            if isMethodDef == True:
-                method[methodIndex][1] += line;
-            elif isMethodImp == True:
-                method[methodIndex][2] += line;
-        else:
-            newFileContentList.append(line);
-        #ENDIF
-        
-        if isMethodDef == True and re.search('\.', line):
-            newFileContentList.append(method[methodIndex][1]);
-            isMethodDef = False;
-
-        elif isMethodImp == True and re.search('ENDMETHOD', line):
-            newFileContentList.append(method[methodIndex][2]);
-            isMethodImp = False;
-        #ENDIF
-        
-    #ENDFOR
+    if methodIndex > -1 and isMethodImp == True:
+        methodImps[methodIndex] += line;
+    #ENDIF
     
+    if isMethodImp == True and re.search('ENDMETHOD', line):
+        isMethodImp = False;
+    #ENDIF
+
+    return isMethodImp, methodIndex, methodImps;
+#ENDDEF
+    
+def createNewFileContent(fileLines, methods):
+    newFileContentList = [];    
     newFileContent  = '';
     methodIndex = -1;
 
@@ -155,5 +162,5 @@ while fileName == '':
 
 fileLines = readFileLines(fileName);
 methods = extractMethodNames(fileLines);
-newFileContent = createNewFileContent(fileLines, methods);
+# newFileContent = createNewFileContent(fileLines, methods);
 # writeNewFileContent(fileName, newFileContent);
