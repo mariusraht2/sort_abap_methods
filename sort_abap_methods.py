@@ -122,7 +122,28 @@ def detMethodImp(line, methodNames, isMethodImp, methodIndex, methodImps):
 
     return isMethodImp, methodIndex, methodImps;
 #ENDDEF
-    
+
+def convMethodDefinitions(methods):
+    for method in methods:
+        if re.search('CLASS-METHODS', method[1]):
+            methodType = 'CLASS-METHODS';
+        elif re.search('METHODS', method[1]):
+            methodType = 'METHODS';
+        #ENDIF
+
+        if re.search(',', method[1]):
+            method[1] = method[1].replace(",",".");
+        #ENDIF
+
+        if not re.search('METHODS', method[1]):
+            result = re.search('\w', method[1]);
+            startIndex = result.start();
+            method[1] = method[1][:startIndex] + methodType + ' ' + method[1][startIndex:];
+        #ENDIF
+    #ENDFOR
+    return methods;
+#ENDDEF
+
 def createNewFileContent(fileLines, methods):
     newFileContentList = [];    
     newFileContent  = '';
@@ -162,5 +183,6 @@ while fileName == '':
 
 fileLines = readFileLines(fileName);
 methods = extractMethodNames(fileLines);
+methods = convMethodDefinitions(methods);
 # newFileContent = createNewFileContent(fileLines, methods);
 # writeNewFileContent(fileName, newFileContent);
