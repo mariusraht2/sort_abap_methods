@@ -246,6 +246,22 @@ CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD idoc_input_matmas02_e.
+
+    CALL FUNCTION mc_fm_name
+      STARTING NEW TASK mc_task_name.
+
+  ENDMETHOD.
+
+
+  METHOD idoc_input_matmas03_e.
+
+    CALL FUNCTION mc_fm_name
+      STARTING NEW TASK mc_task_name.
+
+  ENDMETHOD.
+
+
   METHOD lock_products.
 
     CHECK it_products IS NOT INITIAL.
@@ -262,4 +278,5 @@ CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.
         ct_matid_matnr = lt_matmap.
 
   ENDMETHOD.
+  
 ENDCLASS.

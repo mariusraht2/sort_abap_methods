@@ -1,4 +1,4 @@
-import re, os.path as path;
+import re, os.path as path, numpy as np;
 
 def readFileLines(fileName):
     fileHandler = open(fileName, "r");
@@ -11,16 +11,13 @@ def readFileLines(fileName):
 
 
 #TODO Consider sections
-#TODO Check line breaks at ENDCLASS.
 def extractMethod(fileLines):
     # Extract method names
     newFileContentList = [];
     methodName = '';
     methodType = '';
     methodIndex = -1;
-    methodNames = [];
-    methodDefs = [];
-    methodImps = None;
+    methods = [];
     isClassDef = False;
     isClassImp = False;
     isMethodDef = False;
@@ -34,17 +31,14 @@ def extractMethod(fileLines):
         if re.search('ENDCLASS', line):
             isClassDef = False;
             isClassImp = False;
-            if methodImps == None:
-                methodImps = ['' for y in range(len(methodNames))];
-            # ENDIF
         #ENDIF
 
         if isClassDef == True:
-            methodNames, methodName, methodType, isMethodDef, methodDefs, newFileContentList = detMethodDef(
-                line, methodNames, methodName, methodType, isMethodDef, methodDefs, newFileContentList);
+            methods, methodName, methodType, isMethodDef, newFileContentList = detMethodDef(
+                line, methods, methodName, methodType, isMethodDef, newFileContentList);
         elif isClassImp == True:
-            isMethodImp, methodIndex, methodImps, newFileContentList = detMethodImp(
-                line, methodNames, isMethodImp, methodIndex, methodImps, newFileContentList);
+            methods, isMethodImp, methodIndex, newFileContentList = detMethodImp(
+                line, methods, isMethodImp, methodIndex, newFileContentList);
         else:
             newFileContentList.append(line);
         # ENDIF
@@ -56,27 +50,29 @@ def extractMethod(fileLines):
         # ENDIF
     # ENDFOR
 
-    methods = [[0 for x in range(3)] for y in range(len(methodNames))];
-    for i, methodName in enumerate(methodNames):
-        methods[i][0] = methodName;
-        methods[i][1] = methodDefs[i];
-        methods[i][2] = methodImps[i];
-    # ENDFOR
+    # methods = [[0 for x in range(3)] for y in range(len(methodNames))];
+    # for i, methodName in enumerate(methodNames):
+    #     methods[i][0] = methodName;
+    #     methods[i][1] = methodDefs[i];
+    #     methods[i][2] = methodImps[i];
+    # # ENDFOR
 
+    #TODO Consider sections
     methods = sorted(methods, key=lambda m: m[0]);
     return methods, newFileContentList;
 
 # ENDDEF
 
 
-def detMethodDef(line, methodNames, methodName, methodType, isMethodDef, methodDefs, newFileContentList):
+def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileContentList):
+    methodIndex = len(methods) - 1;
+
     if re.search('METHODS', line):
         isMethodDef = True;
         methodName = '';
         result = re.search('METHODS:?\s+(\w+)', line);
         if result != None:
             methodName = result.group(1);
-            methodNames.append(methodName);
         # ENDIF
         if re.search('CLASS-METHODS', line):
             methodType = 'CLASS-METHODS';
@@ -87,49 +83,51 @@ def detMethodDef(line, methodNames, methodName, methodType, isMethodDef, methodD
         result = re.search('\s*(\w+)', line);
         if result != None:
             methodName = result.group(1);
-            methodNames.append(methodName);
         # ENDIF
     # ENDIF
 
-    methodIndex = len(methodNames) - 1;
-
     if isMethodDef == True:
         try:
-            methodDefs[methodIndex];
+            methods[methodIndex];
         except IndexError:
-            methodDefs.append('');
-        # ENDTRY
-        methodDefs[methodIndex] += line;
+            methods.append(['','','']);
+            methodIndex += 1;
+        #ENDTRY
+        methods[methodIndex][1] += line;
     # ENDIF
+
+    if methodName != '' and methods[methodIndex][0] == '':
+        methods[methodIndex][0] = methodName;
+    #ENDIF
 
     isEndOfDef = False;
     if isMethodDef == True and re.search(',', line):
         isEndOfDef = True;
-        methodDefs[methodIndex] = methodDefs[methodIndex].replace(",", ".");
+        methods[methodIndex][1] = methods[methodIndex][1].replace(",", ".");
     elif isMethodDef == True and re.search('.*\.+', line):
         isEndOfDef = True;
         isMethodDef = False;
     # ENDIF
 
     if isEndOfDef == True:
-        if not re.search('METHODS', methodDefs[methodIndex]):
-            result = re.search('\w', methodDefs[methodIndex]);
+        if not re.search('METHODS', methods[methodIndex][0]):
+            result = re.search('\w', methods[methodIndex][0]);
             startIndex = result.start();
-            methodDefs[methodIndex] = methodDefs[methodIndex][:startIndex] + \
-                methodType + ' ' + methodDefs[methodIndex][startIndex:];
+            methods[methodIndex][1] = methods[methodIndex][1][:startIndex] + \
+                methodType + ' ' + methods[methodIndex][1][startIndex:];
         # ENDIF
         methodName = '';
         isEndOfDef = False;
-        newFileContentList.append(methodDefs[methodIndex]);
+        newFileContentList.append(methods[methodIndex][1]);
     elif isMethodDef == False:
         newFileContentList.append(line);
     # ENDIF
 
-    return methodNames, methodName, methodType, isMethodDef, methodDefs, newFileContentList;
+    return methods, methodName, methodType, isMethodDef, newFileContentList;
 # ENDDEF
 
 
-def detMethodImp(line, methodNames, isMethodImp, methodIndex, methodImps, newFileContentList):
+def detMethodImp(line, methods, isMethodImp, methodIndex, newFileContentList):
     # Check if method implementation
     result = re.search('^\s*METHOD\s+(\w+)', line);
     if result != None:
@@ -139,8 +137,8 @@ def detMethodImp(line, methodNames, isMethodImp, methodIndex, methodImps, newFil
     # Determine method index
     if result != None:
         methodIndex = -1;
-        for i, methodName in enumerate(methodNames):
-            if methodName == result.group(1):
+        for i, method in enumerate(methods):
+            if method[i] == result.group(1):
                 methodIndex = i;
                 break;
             # ENDIF
@@ -148,65 +146,40 @@ def detMethodImp(line, methodNames, isMethodImp, methodIndex, methodImps, newFil
     # ENDIF
 
     if methodIndex > -1 and isMethodImp == True:
-        methodImps[methodIndex] += line;
+        methods[methodIndex][2] += line;
     # ENDIF
 
     if isMethodImp == True and re.search('ENDMETHOD', line):
         isMethodImp = False;
-        newFileContentList.append(methodImps[methodIndex]);
+        newFileContentList.append(methods[methodIndex][2]);
     elif isMethodImp == False:
         newFileContentList.append(line);        
     # ENDIF
 
-    return isMethodImp, methodIndex, methodImps, newFileContentList;
-# ENDDEF
-
-
-def convMethodDefinitions(methods):
-    for method in methods:
-        if re.search('CLASS-METHODS', method[1]):
-            methodType = 'CLASS-METHODS';
-        elif re.search('METHODS', method[1]):
-            methodType = 'METHODS';
-        # ENDIF
-
-        if not re.search('METHODS', method[1]):
-            result = re.search('\w', method[1]);
-            startIndex = result.start();
-            method[1] = method[1][:startIndex] + \
-                methodType + ' ' + method[1][startIndex:];
-        # ENDIF
-    # ENDFOR
-    return methods;
+    return methods, isMethodImp, methodIndex, newFileContentList;
 # ENDDEF
 
 
 def createNewFileContent(newFileContentList, methods):
     newFileContent = '';
-    methodIndex = -1;
+    methodIndex = 0;
 
     for line in newFileContentList:
-        # if methodIndex > 0:
-        #     newFileContent += "\n";
-        # # ENDIF
-
-        if methodIndex + 1 == len(methods):
-            methodIndex = 0;
-        #ENDIF
-
         if re.search('METHODS', line):
-            methodIndex += 1;
             newFileContent += methods[methodIndex][1];
-        elif re.search('^\s*METHOD', line):
             methodIndex += 1;
+        elif re.search('^\s*METHOD', line):
             newFileContent += methods[methodIndex][2];
+            methodIndex += 1;
         else:
             newFileContent += line;
         # ENDIF
 
+        if methodIndex == len(methods):
+            methodIndex = 0;
+        #ENDIF
     # ENDFOR
 
-    print(newFileContent);
     return newFileContent;
 
 # ENDDEF
