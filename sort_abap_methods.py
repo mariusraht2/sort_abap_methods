@@ -65,14 +65,13 @@ def extractMethod(fileLines):
 
 
 def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileContentList):
-    methodIndex = len(methods) - 1;
-
     if re.search('METHODS', line):
         isMethodDef = True;
         methodName = '';
         result = re.search('METHODS:?\s+(\w+)', line);
         if result != None:
             methodName = result.group(1);
+            methods.append(['','','']);
         # ENDIF
         if re.search('CLASS-METHODS', line):
             methodType = 'CLASS-METHODS';
@@ -83,8 +82,11 @@ def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileCont
         result = re.search('\s*(\w+)', line);
         if result != None:
             methodName = result.group(1);
+            methods.append(['','','']);
         # ENDIF
     # ENDIF
+
+    methodIndex = len(methods) - 1;
 
     if isMethodDef == True:
         try:
@@ -138,7 +140,7 @@ def detMethodImp(line, methods, isMethodImp, methodIndex, newFileContentList):
     if result != None:
         methodIndex = -1;
         for i, method in enumerate(methods):
-            if method[i] == result.group(1):
+            if method[0] == result.group(1):
                 methodIndex = i;
                 break;
             # ENDIF
