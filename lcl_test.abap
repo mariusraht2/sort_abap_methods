@@ -36,7 +36,7 @@ CLASS ziot_cl_whsprd_creation DEFINITION
         iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
       RAISING
         zcx_cp_not_readable
-        zcx_plc_not_determinable,.
+        zcx_plc_not_determinable.
     CLASS-METHODS create_job.
 
   PROTECTED SECTION.
