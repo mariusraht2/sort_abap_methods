@@ -10,6 +10,8 @@ def readFileLines(fileName):
 # ENDDEF
 
 
+#TODO Consider sections
+#TODO Check line breaks at ENDCLASS.
 def extractMethod(fileLines):
     # Extract method names
     newFileContentList = [];
@@ -24,7 +26,11 @@ def extractMethod(fileLines):
     isMethodDef = False;
     isMethodImp = False;
 
-    for line in fileLines:
+    for i, line in enumerate(fileLines):
+        if i > 0:
+            line = "\n" + line;
+        #ENDIF
+
         if re.search('ENDCLASS', line):
             isClassDef = False;
             isClassImp = False;
@@ -93,10 +99,6 @@ def detMethodDef(line, methodNames, methodName, methodType, isMethodDef, methodD
         except IndexError:
             methodDefs.append('');
         # ENDTRY
-
-        if methodDefs[methodIndex] != '':
-            methodDefs[methodIndex] += "\n";
-        # ENDIF
         methodDefs[methodIndex] += line;
     # ENDIF
 
@@ -119,6 +121,8 @@ def detMethodDef(line, methodNames, methodName, methodType, isMethodDef, methodD
         methodName = '';
         isEndOfDef = False;
         newFileContentList.append(methodDefs[methodIndex]);
+    elif isMethodDef == False:
+        newFileContentList.append(line);
     # ENDIF
 
     return methodNames, methodName, methodType, isMethodDef, methodDefs, newFileContentList;
@@ -144,15 +148,14 @@ def detMethodImp(line, methodNames, isMethodImp, methodIndex, methodImps, newFil
     # ENDIF
 
     if methodIndex > -1 and isMethodImp == True:
-        if methodImps[methodIndex] != '':
-            methodImps[methodIndex] += "\n";
-        # ENDIF
         methodImps[methodIndex] += line;
     # ENDIF
 
     if isMethodImp == True and re.search('ENDMETHOD', line):
         isMethodImp = False;
         newFileContentList.append(methodImps[methodIndex]);
+    elif isMethodImp == False:
+        newFileContentList.append(line);        
     # ENDIF
 
     return isMethodImp, methodIndex, methodImps, newFileContentList;
@@ -183,9 +186,9 @@ def createNewFileContent(newFileContentList, methods):
     methodIndex = -1;
 
     for line in newFileContentList:
-        if methodIndex > 0:
-            newFileContent += "\n";
-        # ENDIF
+        # if methodIndex > 0:
+        #     newFileContent += "\n";
+        # # ENDIF
 
         if methodIndex + 1 == len(methods):
             methodIndex = 0;

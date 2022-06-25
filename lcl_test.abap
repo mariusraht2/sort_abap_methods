@@ -15,28 +15,28 @@ CLASS ziot_cl_whsprd_creation DEFINITION
                mc_task_name TYPE progname VALUE 'ZIOT_WHSPRD_CREATION'.
 
     CLASS-METHODS: 
-    execute
-      IMPORTING
-        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
-        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
-      RAISING
-        zcx_cp_not_readable
-        zcx_plc_not_determinable,
-    idoc_input_matmas01_e
-      IMPORTING
-        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
-        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
-      RAISING
-        zcx_cp_not_readable
-        zcx_plc_not_determinable,
-    idoc_input_matmas02_e,
-    idoc_input_matmas03_e
-      IMPORTING
-        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
-        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
-      RAISING
-        zcx_cp_not_readable
-        zcx_plc_not_determinable.
+      execute
+        IMPORTING
+          iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+          iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+        RAISING
+          zcx_cp_not_readable
+          zcx_plc_not_determinable,
+      idoc_input_matmas01_e
+        IMPORTING
+          iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+          iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+        RAISING
+          zcx_cp_not_readable
+          zcx_plc_not_determinable,
+      idoc_input_matmas02_e,
+      idoc_input_matmas03_e
+        IMPORTING
+          iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+          iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+        RAISING
+          zcx_cp_not_readable
+          zcx_plc_not_determinable.
     CLASS-METHODS create_job.
 
   PROTECTED SECTION.

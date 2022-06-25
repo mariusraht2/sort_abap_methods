@@ -1,8 +1,25 @@
-"! Automatic creation of Warehouse Products"! <p>This report is being executed by a job ZIOT_WHSPRD_CREATION and creates warehouse products from ECC products."! These products are being sent by the ECC to EWM via IDOCs. After the EWM received these MATMAS-IDOCs a method"! is being triggered in the enhancement ZIOT_EI_IDOC_INPUT_MATMAS01_E which creates the job if it hasn't been"! already scheduled or released.</p>CLASS ziot_cl_whsprd_creation DEFINITION    CLASS-METHODS conv_apo_matkey_to_whsprod
+"! Automatic creation of Warehouse Products
+"! <p>This report is being executed by a job ZIOT_WHSPRD_CREATION and creates warehouse products from ECC products.
+"! These products are being sent by the ECC to EWM via IDOCs. After the EWM received these MATMAS-IDOCs a method
+"! is being triggered in the enhancement ZIOT_EI_IDOC_INPUT_MATMAS01_E which creates the job if it hasn't been
+"! already scheduled or released.</p>
+CLASS ziot_cl_whsprd_creation DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PRIVATE .
+
+  PUBLIC SECTION.
+    CONSTANTS: mc_job_name  TYPE btcjob   VALUE 'ZIOT_WHSPRD_CREATION',
+               mc_rep_name  TYPE btcrep   VALUE 'ZIOT_R_WHSPRD_CREATION',
+               mc_fm_name   TYPE progname VALUE 'ZIOT_FM_WHSPRD_CREATION',
+               mc_task_name TYPE progname VALUE 'ZIOT_WHSPRD_CREATION'.
+
+    CLASS-METHODS conv_apo_matkey_to_whsprod
       IMPORTING
         !it_products       TYPE /sapapo/matkey_out_tab
       RETURNING
-        VALUE(rt_products) TYPE /scwm/tt_material_lgnum_maint.    CLASS-METHODS create_job.
+        VALUE(rt_products) TYPE /scwm/tt_material_lgnum_maint.
+    CLASS-METHODS create_job.
     CLASS-METHODS 
     CLASS-METHODS create_whs_products
       IMPORTING
@@ -14,33 +31,48 @@
     CLASS-METHODS det_relevant_products
       RETURNING
         VALUE(rt_products) TYPE /sapapo/matkey_out_tab.
+
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+    CLASS-DATA: mv_lgnum    TYPE /scwm/lgnum VALUE ziot_constants=>lgnum,
+                mv_entitled TYPE /scwm/de_entitled VALUE ziot_constants=>entitled,
+                mv_msg      TYPE string.
+
     CLASS-METHODS: 
-    execute
-      IMPORTING
-        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
-        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
-      RAISING
-        zcx_cp_not_readable
-        zcx_plc_not_determinable.
-    CLASS-METHODS idoc_input_matmas01_e
-      IMPORTING
-        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
-        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
-      RAISING
-        zcx_cp_not_readable
-        zcx_plc_not_determinable.
-    CLASS-METHODS idoc_input_matmas02_e.
-    CLASS-METHODS idoc_input_matmas03_e
-      IMPORTING
-        iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
-        iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
-      RAISING
-        zcx_cp_not_readable
-        zcx_plc_not_determinable.
+      execute
+        IMPORTING
+          iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+          iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+        RAISING
+          zcx_cp_not_readable
+          zcx_plc_not_determinable.
+      CLASS-METHODS idoc_input_matmas01_e
+        IMPORTING
+          iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+          iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+        RAISING
+          zcx_cp_not_readable
+          zcx_plc_not_determinable.
+      CLASS-METHODS idoc_input_matmas02_e.
+      CLASS-METHODS idoc_input_matmas03_e
+        IMPORTING
+          iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
+          iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
+        RAISING
+          zcx_cp_not_readable
+          zcx_plc_not_determinable.
     CLASS-METHODS: lock_products
       IMPORTING
         !it_products TYPE /scwm/tt_material_lgnum_maint.
-ENDCLASS.CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.  METHOD create_job.
+
+ENDCLASS.
+
+
+
+CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.
+
+
+  METHOD create_job.
 
     TRY.
         DATA(lv_enqueued) = ziot_cl_bs_general=>enqueue( iv_exfunc = mc_task_name
@@ -81,6 +113,8 @@ ENDCLASS.CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.  METHOD create_job.
     ziot_cl_log=>get_instance( )->save( ).
 
   ENDMETHOD.
+
+
   METHOD create_whs_products.
 
     DATA: lt_bapiret TYPE bapirettab.
@@ -108,6 +142,8 @@ ENDCLASS.CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.  METHOD create_job.
     ziot_cl_log=>get_instance( )->log_bapiret( lt_bapiret ).
 
   ENDMETHOD.
+
+
   METHOD dequeue_all.
 
     " Materialien entsperren
@@ -117,6 +153,8 @@ ENDCLASS.CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.  METHOD create_job.
     ziot_cl_bs_general=>dequeue( iv_exfunc = sy-repid ).
 
   ENDMETHOD.
+
+
   METHOD det_relevant_products.
 
     DATA: mo_mon_prod_service TYPE REF TO  /scwm/cl_mon_prod.
@@ -159,6 +197,8 @@ ENDCLASS.CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.  METHOD create_job.
     ENDLOOP.
 
   ENDMETHOD.
+
+
   METHOD execute.
 
     mv_lgnum    = iv_lgnum.
@@ -187,12 +227,16 @@ ENDCLASS.CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.  METHOD create_job.
     ziot_cl_log=>get_instance( )->save( ).
 
   ENDMETHOD.
+
+
   METHOD idoc_input_matmas01_e.
 
     CALL FUNCTION mc_fm_name
       STARTING NEW TASK mc_task_name.
 
   ENDMETHOD.
+
+
 
 
 ENDCLASS.
