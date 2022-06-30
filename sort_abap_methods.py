@@ -1,4 +1,4 @@
-import re, os.path as path, numpy as np;
+import re, os.path as path;
 
 def readFileLines(fileName):
     fileHandler = open(fileName, "r");
@@ -9,8 +9,8 @@ def readFileLines(fileName):
     return fileContent.splitlines();
 # ENDDEF
 
-
-#TODO Consider sections
+#TODO Fix bugs (CLASS-METHODS, line breaks)
+#TODO Consider sections in definition part
 def extractMethod(fileLines):
     # Extract method names
     newFileContentList = [];
@@ -50,28 +50,20 @@ def extractMethod(fileLines):
         # ENDIF
     # ENDFOR
 
-    # methods = [[0 for x in range(3)] for y in range(len(methodNames))];
-    # for i, methodName in enumerate(methodNames):
-    #     methods[i][0] = methodName;
-    #     methods[i][1] = methodDefs[i];
-    #     methods[i][2] = methodImps[i];
-    # # ENDFOR
-
-    #TODO Consider sections
     methods = sorted(methods, key=lambda m: m[0]);
     return methods, newFileContentList;
 
 # ENDDEF
 
 
-def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileContentList):
+def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileContentList):   
     if re.search('METHODS', line):
         isMethodDef = True;
+        methods.append(['','','','']);
         methodName = '';
         result = re.search('METHODS:?\s+(\w+)', line);
         if result != None:
             methodName = result.group(1);
-            methods.append(['','','']);
         # ENDIF
         if re.search('CLASS-METHODS', line):
             methodType = 'CLASS-METHODS';
@@ -82,19 +74,13 @@ def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileCont
         result = re.search('\s*(\w+)', line);
         if result != None:
             methodName = result.group(1);
-            methods.append(['','','']);
+            methods.append(['','','','']);
         # ENDIF
     # ENDIF
 
     methodIndex = len(methods) - 1;
 
     if isMethodDef == True:
-        try:
-            methods[methodIndex];
-        except IndexError:
-            methods.append(['','','']);
-            methodIndex += 1;
-        #ENDTRY
         methods[methodIndex][1] += line;
     # ENDIF
 

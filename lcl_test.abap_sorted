@@ -14,21 +14,17 @@ CLASS ziot_cl_whsprd_creation DEFINITION
                mc_fm_name   TYPE progname VALUE 'ZIOT_FM_WHSPRD_CREATION',
                mc_task_name TYPE progname VALUE 'ZIOT_WHSPRD_CREATION'.
 
-    CLASS-METHODS: CLASS-METHODS 
+    CLASS-METHODS: 
+    CLASS-METHODS CLASS-METHODS 
     CLASS-METHODS conv_apo_matkey_to_whsprod
       IMPORTING
         !it_products       TYPE /sapapo/matkey_out_tab
       RETURNING
         VALUE(rt_products) TYPE /scwm/tt_material_lgnum_maint.CLASS-METHODS 
-    CLASS-METHODS create_job.
-    CLASS-METHODS CLASS-METHODS 
+    CLASS-METHODS create_job.CLASS-METHODS 
     CLASS-METHODS create_whs_products
       IMPORTING
-        !it_products TYPE /scwm/tt_material_lgnum_maint.CLASS-METHODS 
-    dequeue_all
-      RAISING
-        zcx_cp_not_readable
-        zcx_plc_not_determinable.
+        !it_products TYPE /scwm/tt_material_lgnum_maint.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -36,6 +32,10 @@ CLASS ziot_cl_whsprd_creation DEFINITION
                 mv_entitled TYPE /scwm/de_entitled VALUE ziot_constants=>entitled,
                 mv_msg      TYPE string.
 CLASS-METHODS 
+    dequeue_all
+      RAISING
+        zcx_cp_not_readable
+        zcx_plc_not_determinable.CLASS-METHODS 
     det_relevant_products
       RETURNING
         VALUE(rt_products) TYPE /sapapo/matkey_out_tab.CLASS-METHODS 
@@ -53,20 +53,21 @@ CLASS-METHODS
         RAISING
           zcx_cp_not_readable
           zcx_plc_not_determinable.CLASS-METHODS 
-      idoc_input_matmas02_e.CLASS-METHODS 
-      idoc_input_matmas03_e
-        IMPORTING
-          iv_lgnum    TYPE /scwm/lgnum DEFAULT ziot_constants=>lgnum
-          iv_entitled TYPE /scwm/de_entitled DEFAULT ziot_constants=>entitled
-        RAISING
-          zcx_cp_not_readable
-          zcx_plc_not_determinable.
+      idoc_input_matmas02_e.
 
 ENDCLASS.
 
 
 
 CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.
+
+
+  METHOD idoc_input_matmas03_e.
+
+    CALL FUNCTION mc_fm_name
+      STARTING NEW TASK mc_task_name.
+
+  ENDMETHOD.
 
 
   METHOD lock_products.
@@ -85,6 +86,8 @@ CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.
         ct_matid_matnr = lt_matmap.
 
   ENDMETHOD.
+
+
 
 
 
@@ -251,22 +254,6 @@ CLASS ZIOT_CL_WHSPRD_CREATION IMPLEMENTATION.
 
     dequeue_all( ).
     ziot_cl_log=>get_instance( )->save( ).
-
-  ENDMETHOD.
-
-
-  METHOD idoc_input_matmas01_e.
-
-    CALL FUNCTION mc_fm_name
-      STARTING NEW TASK mc_task_name.
-
-  ENDMETHOD.
-
-
-  METHOD idoc_input_matmas02_e.
-
-    CALL FUNCTION mc_fm_name
-      STARTING NEW TASK mc_task_name.
 
   ENDMETHOD.
   
