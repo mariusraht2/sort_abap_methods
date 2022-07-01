@@ -203,3 +203,5 @@ fileLines = readFileLines(fileName);
 methods, newFileContentList = extractMethod(fileLines);
 newFileContent = createNewFileContent(newFileContentList, methods);
 writeNewFileContent(fileName, newFileContent);
+
+print('Conversion successfully executed.');
