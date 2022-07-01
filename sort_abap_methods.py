@@ -9,7 +9,6 @@ def readFileLines(fileName):
     return fileContent.splitlines();
 # ENDDEF
 
-#TODO Fix bugs (CLASS-METHODS, line breaks)
 #TODO Consider sections in definition part
 def extractMethod(fileLines):
     # Extract method names
@@ -74,7 +73,6 @@ def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileCont
         result = re.search('\s*(\w+)', line);
         if result != None:
             methodName = result.group(1);
-            methods.append(['','','','']);
         # ENDIF
     # ENDIF
 
@@ -92,14 +90,15 @@ def detMethodDef(line, methods, methodName, methodType, isMethodDef, newFileCont
     if isMethodDef == True and re.search(',', line):
         isEndOfDef = True;
         methods[methodIndex][1] = methods[methodIndex][1].replace(",", ".");
+        methods.append(['','','','']);
     elif isMethodDef == True and re.search('.*\.+', line):
         isEndOfDef = True;
         isMethodDef = False;
     # ENDIF
 
     if isEndOfDef == True:
-        if not re.search('METHODS', methods[methodIndex][0]):
-            result = re.search('\w', methods[methodIndex][0]);
+        if not re.search('METHODS', methods[methodIndex][1]):
+            result = re.search('\w', methods[methodIndex][1]);
             startIndex = result.start();
             methods[methodIndex][1] = methods[methodIndex][1][:startIndex] + \
                 methodType + ' ' + methods[methodIndex][1][startIndex:];
