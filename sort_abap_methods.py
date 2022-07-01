@@ -149,7 +149,10 @@ def detMethodImp(line, methods, isMethodImp, methodIndex, newFileContentList):
 def createNewFileContent(newFileContentList, methods):
     newFileContent = '';
     methodIndex = 0;
-    methods = sorted(methods, key=lambda m: (m[1], m[0]));
+    # As '_' may be considered appearing before any character the sort order is
+    # not identical to the one SAP uses. Thus we temporarily change '_' to '{'
+    # which is the first ASCII character after 'z' (7A/122).
+    methods = sorted(methods, key=lambda m: (m[1], m[0].lower().replace("_", "{")));
 
     for line in newFileContentList:
         if re.search('METHODS', line):           
@@ -167,7 +170,7 @@ def createNewFileContent(newFileContentList, methods):
         # * Implementations are being sorted by names only
         if methodIndex == len(methods):
             methodIndex = 0;
-            methods = sorted(methods, key=lambda m: m[0]);
+            methods = sorted(methods, key=lambda m: m[0].lower().replace("_", "{"));
         #ENDIF
     # ENDFOR
 
@@ -177,7 +180,8 @@ def createNewFileContent(newFileContentList, methods):
 
 
 def writeNewFileContent(fileName, newFileContent):
-    fileHandler = open(path.splitext(fileName)[0] + "_sorted" + path.splitext(fileName)[1], "w");
+    fileNameParts = path.splitext(fileName);
+    fileHandler = open(fileNameParts[0] + "_sorted" + fileNameParts[1], "w");
     fileHandler.write(newFileContent);
     fileHandler.flush();
     fileHandler.close();
