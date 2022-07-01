@@ -188,10 +188,14 @@ def writeNewFileContent(fileName, newFileContent):
 # ENDDEF
 
 
-print('Dateiname:');
 fileName = '';
-while fileName == '' or not path.exists(fileName):
-    fileName = input();
+while True:
+    fileName = input('Dateiname: ');
+    if fileName != '' and path.exists(fileName):
+        break;
+    else:
+        print('Please enter a valid file name!');
+    #ENDIF
 # ENDWHILE
 
 fileLines = readFileLines(fileName);
