@@ -177,7 +177,7 @@ def createNewFileContent(newFileContentList, methods):
 
 
 def writeNewFileContent(fileName, newFileContent):
-    fileHandler = open(fileName + "_sorted", "w");
+    fileHandler = open(path.splitext(fileName)[0] + "_sorted" + path.splitext(fileName)[1], "w");
     fileHandler.write(newFileContent);
     fileHandler.flush();
     fileHandler.close();
