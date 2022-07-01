@@ -191,6 +191,7 @@ def writeNewFileContent(fileName, newFileContent):
 fileName = '';
 while True:
     fileName = input('Dateiname: ');
+    fileName = fileName.translate({ord(i):None for i in '\'"&'}).lstrip();
     if fileName != '' and path.exists(fileName):
         break;
     else:
