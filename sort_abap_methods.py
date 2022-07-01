@@ -13,7 +13,7 @@ def readFileLines(fileName):
 def extractMethod(fileLines):
     # Extract method names
     newFileContentList = [];
-    sectionType = '';
+    sectionType = 0;
     methodName = '';
     methodType = '';
     methodIndex = -1;
@@ -29,7 +29,7 @@ def extractMethod(fileLines):
         #ENDIF
 
         if result := re.search('(\w+)\s+SECTION', line):
-            sectionType = result.group(1);
+            sectionType += 1;
         elif re.search('ENDCLASS', line):
             isClassDef = False;
             isClassImp = False;
@@ -52,7 +52,6 @@ def extractMethod(fileLines):
         # ENDIF
     # ENDFOR
 
-    methods = sorted(methods, key=lambda m: m[0]);
     return methods, newFileContentList;
 
 # ENDDEF
@@ -150,9 +149,10 @@ def detMethodImp(line, methods, isMethodImp, methodIndex, newFileContentList):
 def createNewFileContent(newFileContentList, methods):
     newFileContent = '';
     methodIndex = 0;
+    methods = sorted(methods, key=lambda m: (m[1], m[0]));
 
     for line in newFileContentList:
-        if re.search('METHODS', line):
+        if re.search('METHODS', line):           
             newFileContent += methods[methodIndex][2];
             methodIndex += 1;
         elif re.search('^\s*METHOD', line):
@@ -162,8 +162,12 @@ def createNewFileContent(newFileContentList, methods):
             newFileContent += line;
         # ENDIF
 
+        # First method definitions are built then implementations:
+        # * Definitions are being sorted by sections and names
+        # * Implementations are being sorted by names only
         if methodIndex == len(methods):
             methodIndex = 0;
+            methods = sorted(methods, key=lambda m: m[0]);
         #ENDIF
     # ENDFOR
 
